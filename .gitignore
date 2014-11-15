@@ -1,2 +1,3 @@
 server.js
 *.bat
+node_modules/
