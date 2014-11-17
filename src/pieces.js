@@ -32,19 +32,24 @@
       //4 rooks
       this._initRooks();
       //16 pawns
-      this._initPawns();
+      //this._initPawns();
 
-      $h.events.listen("squareclick", this.checkSquareClick.bind(this));
+      $h.events.listen("squareclick", this.handleSquareClick.bind(this));
 
     },
-    checkSquareClick: function(x, y){
+    //See if the the square click event clicks on a piece.
+    handleSquareClick: function(x, y){
       var piece = this.at(x,y);
-
+      //If there is a pice at that square
       if(piece){
+        //Check that currentActive is intialized
         if(this.currentActive){
+          //Set whatever is active as inactive
           this.currentActive.setInactive();
         }
+        //Set the new active piece
         this.currentActive = piece;
+        //Set is as active
         piece.setActive();
       }
     },
@@ -57,32 +62,27 @@
       }
       return this.board[y][x] || null;
     },
+
     //Draw the pieces to the board
     //gets the current canvas to draw to and whether or not the board is flipped
     draw: function(canvas, flip){
-      var squareSize = $h.constants("squareSize");
-      var that = this;
-
       this._pieces.forEach(function(p){
-        
         p.draw(canvas, flip);
-       
-        
       });
     },
     flipPos: function(pos){
       return (pos - 7) * -1;
     },
     _initQueens: function(){
-      var q1 = new Queen("white", 3, 0);
-      var q2 = new Queen("black", 3, 7);
+      var q1 = new Queen("white", 3, 0, this);
+      var q2 = new Queen("black", 3, 7, this);
       this._pieces.push(q1,q2);
       this.board[0][3] = q1;
       this.board[7][3] = q2;
     },
     _initKings: function(){
-      var k1 = new King("white", 4, 0);
-      var k2 = new King("black", 4, 7);
+      var k1 = new King("white", 4, 0, this);
+      var k2 = new King("black", 4, 7, this);
       this._pieces.push(k1, k2);
       this.board[0][4] = k1;
       this.board[7][4] = k2;
@@ -95,10 +95,10 @@
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? "white" : "black";
-        b = new Bishop(color, x1, y);
+        b = new Bishop(color, x1, y, this);
         this._pieces.push(b);
         this.board[y][x1] = b;
-        b = new Bishop(color, x2, y);
+        b = new Bishop(color, x2, y, this);
         this._pieces.push(b);
         this.board[y][x2] = b;
         y = 7;
@@ -112,10 +112,10 @@
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? "white" : "black";
-        b = new Knight(color, x1, y);
+        b = new Knight(color, x1, y, this);
         this._pieces.push(b);
         this.board[y][x1] = b;
-        b = new Knight(color, x2, y);
+        b = new Knight(color, x2, y, this);
         this._pieces.push(b);
         this.board[y][x2] = b;
         y = 7;
@@ -129,10 +129,10 @@
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? "white" : "black";
-        b = new Rook(color, x1, y);
+        b = new Rook(color, x1, y, this);
         this._pieces.push(b);
         this.board[y][x1] = b;
-        b = new Rook(color, x2, y);
+        b = new Rook(color, x2, y, this);
         this._pieces.push(b);
         this.board[y][x2] = b;
         y = 7;
@@ -144,7 +144,7 @@
       var p;
       for(var i=0; i<2; i++){
         for(var j=0; j<8; j++){
-          p = new Pawn(team, j, row);
+          p = new Pawn(team, j, row, this);
           this._pieces.push(p);
           this.board[row][j] = p;
         }

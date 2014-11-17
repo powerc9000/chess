@@ -24,7 +24,6 @@
 
   });
   $h.run();
-
   //Sets up event listeners for clicks on the canvas
   //Turns those into what square was clicked on
   //Fire an event saying as much

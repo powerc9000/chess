@@ -1033,14 +1033,20 @@ var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
 function Bishop(team, x, y){
-  Piece.call(this, team, x, y);
+  Piece.apply(this, arguments);
 }
 $h.inherit(Piece, Bishop);
 //Returns an array of all possible x,y pairs the Bishop can move
-Bishop.prototype.moves = function(board){
+Bishop.prototype.calcMoves = function(board){
+   var squares = [];
   //Go up
-  //Go down
-  //Go left
+
+ 
+  squares = squares.concat(this.checkDiagUpLeft(7));
+  squares = squares.concat(this.checkDiagUpRight(7));
+  squares = squares.concat(this.checkDiagDownLeft(7));
+  squares = squares.concat(this.checkDiagDownRight(7));
+  this.validSquares = squares;
 };
 
 module.exports = Bishop;
@@ -1104,14 +1110,22 @@ var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
 function King(team, x, y){
-  Piece.call(this, team, x, y);
+  Piece.apply(this, arguments);
 }
 $h.inherit(Piece, King);
 //Returns an array of all possible x,y pairs the queen can move
-King.prototype.moves = function(board){
+King.prototype.calcMoves = function(){
+   var squares = [];
   //Go up
-  //Go down
-  //Go left
+  squares = squares.concat(this.checkUp(1));
+  squares = squares.concat(this.checkLeft(1));
+  squares = squares.concat(this.checkDown(1));
+  squares = squares.concat(this.checkRight(1));
+  squares = squares.concat(this.checkDiagUpLeft(1));
+  squares = squares.concat(this.checkDiagUpRight(1));
+  squares = squares.concat(this.checkDiagDownLeft(1));
+  squares = squares.concat(this.checkDiagDownRight(1));
+  this.validSquares = squares;
 };
 
 module.exports = King;
@@ -1120,7 +1134,7 @@ var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
 function Knight(team, x, y){
-  Piece.call(this, team, x, y);
+  Piece.apply(this, arguments);
 }
 $h.inherit(Piece, Knight);
 //Returns an array of all possible x,y pairs the Knight can move
@@ -1158,7 +1172,6 @@ module.exports = Knight;
 
   });
   $h.run();
-
   //Sets up event listeners for clicks on the canvas
   //Turns those into what square was clicked on
   //Fire an event saying as much
@@ -1181,14 +1194,23 @@ var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
 function Pawn(team, x, y){
-  Piece.call(this, team, x, y);
+  Piece.apply(this, arguments);
+  this.moved = false;
 }
 $h.inherit(Piece, Pawn);
 //Returns an array of all possible x,y pairs the Pawn can move
-Pawn.prototype.moves = function(board){
+Pawn.prototype.calcMoves = function(){
+  var squares = [];
   //Go up
-  //Go down
-  //Go left
+  var range = (!this.moved) ? 2 : 1;
+  if(this.team === "white"){
+    squares = squares.concat(this.checkUp(range));
+  }else{
+    squares = squares.concat(this.checkDown(range));
+  }
+  
+  
+  this.validSquares = squares;
 };
 
 module.exports = Pawn;
@@ -1200,11 +1222,14 @@ module.exports = Pawn;
     "white": "white",
     "black": "black"
   };
-  function Piece(team, x, y, color){
+  function Piece(team, x, y, pieces, color){
+    console.log(team, x, y, color);
     this.team = team;
     this.color = color || defaults[team];
     this.position = $h.Vector(x,y);
     this._active = false;
+    this.pieces = pieces;
+    this.validSquares = [];
   }
 
   Piece.prototype.getTeam = function(){
@@ -1214,15 +1239,189 @@ module.exports = Pawn;
   Piece.prototype.isActive = function(){
     return this._active;
   };
-
+  Piece.prototype.calcMoves = function(){};
   Piece.prototype.setActive = function(){
+    this.calcMoves();
     this._active = true;
   };
 
   Piece.prototype.setInactive = function(){
     this._active = false;
   };
+  Piece.prototype.checkUp = function(range){
+    var squares = [];
+    var p = null;
+    var tile = this.position.y + 1;
+    var dist = 1;
+    while(tile < 8 && dist <= range){
+      p = this.pieces.at(this.position.x, tile);
+      if(!p){
+        squares.push([this.position.x, tile]);
+      }else{
+        if(p.team != this.team){
+          squares.push([this.position.x, tile]);
+        }
+        break;
+      }
+      tile++;
+      dist++;
+    }
+    return squares;
+  };
+  Piece.prototype.checkDown = function(range){
+    var squares = [];
+    var p = null;
+    var tile = this.position.y - 1;
+    var dist = 1;
+    while(tile >= 0 && dist <= range){
+      p = this.pieces.at(this.position.x, tile);
+      if(!p){
+        squares.push([this.position.x, tile]);
+      }else{
+        if(p.team != this.team){
+          squares.push([this.position.x, tile]);
+        }
+        break;
+      }
+      tile--;
+      dist++;
+    }
+    return squares;
+  };
+   Piece.prototype.checkRight = function(range){
+    var squares = [];
+    var p = null;
+    var tile = this.position.x + 1;
+    var dist = 1;
+    while(tile < 8 && dist <= range){
+      p = this.pieces.at(tile, this.position.y);
+      if(!p){
+        squares.push([tile, this.position.y]);
+      }else{
+        if(p.team != this.team){
+          squares.push([this.position.x, tile]);
+        }
+        break;
+      }
+      tile++;
+      dist++;
+    }
+    return squares;
+  };
+  Piece.prototype.checkLeft = function(range){
+    var squares = [];
+    var p = null;
+    var tile = this.position.x - 1;
+    var dist = 1;
+    while(tile >= 0 && dist <= range){
+      p = this.pieces.at(tile, this.position.y);
+      if(!p){
+        squares.push([tile, this.position.y]);
+      }else{
+        if(p.team != this.team){
+          squares.push([this.position.x, tile]);
+        }
+        break;
+      }
+      tile--;
+      dist++;
+    }
+    return squares;
+  };
+  Piece.prototype.checkDiagUpLeft = function(range){
+    var squares = [];
+    var p = null;
+    var tilex = this.position.x - 1;
+    var tiley = this.position.y + 1;
+    var dist = 1;
+    while(tilex >= 0 && tiley < 8 && dist <= range){
+      p = this.pieces.at(tilex, tiley);
+      if(!p){
+        squares.push([tilex, tiley]);
+      }else{
+        if(p.team != this.team){
+          squares.push([this.position.x, tile]);
+        }
+        break;
+      }
+      tilex--;
+      tiley++;
+      dist++;
+    }
+    return squares;
+  };
+
+  Piece.prototype.checkDiagUpRight = function(range){
+    var squares = [];
+    var p = null;
+    var tilex = this.position.x + 1;
+    var tiley = this.position.y + 1;
+    var dist = 1;
+    while(tilex < 8 && tiley < 8 && dist <= range){
+      p = this.pieces.at(tilex, tiley);
+      if(!p){
+        squares.push([tilex, tiley]);
+      }else{
+        if(p.team != this.team){
+          squares.push([this.position.x, tile]);
+        }
+        break;
+      }
+      tilex++;
+      tiley++;
+      dist++;
+    }
+    return squares;
+  };
+  Piece.prototype.checkDiagDownRight = function(range){
+    var squares = [];
+    var p = null;
+    var tilex = this.position.x + 1;
+    var tiley = this.position.y - 1;
+    var dist = 1;
+    while(tilex < 8 && tiley >= 0 && dist <= range){
+      p = this.pieces.at(tilex, tiley);
+      if(!p){
+        squares.push([tilex, tiley]);
+      }else{
+        if(p.team != this.team){
+          squares.push([this.position.x, tile]);
+        }
+        break;
+      }
+      tilex++;
+      tiley--;
+      dist++;
+    }
+    return squares;
+  };
+  Piece.prototype.checkDiagDownLeft = function(range){
+    var squares = [];
+    var p = null;
+    var tilex = this.position.x - 1;
+    var tiley = this.position.y - 1;
+    var dist = 1;
+    while(tilex >= 0 && tiley >= 0 && dist <= range){
+      p = this.pieces.at(tilex, tiley);
+      if(!p){
+        squares.push([tilex, tiley]);
+      }else{
+        if(p.team != this.team){
+          squares.push([this.position.x, tile]);
+        }
+        break;
+      }
+      tilex--;
+      tiley--;
+      dist++;
+    }
+    return squares;
+  };
+  Piece.prototype.translate = function(val, flip){
+    return (flip) ? val : (val - 7) * -1;
+  };
   Piece.prototype.draw = function(canvas, flip){
+    var that = this;
     //Canvas x,y starts at the top left but chess x,y starts at the bottom left
     //So if the board isnt flipped we need to flip the y position of the piece to print in properly
     var y = (flip) ? this.position.y : (this.position.y - 7) * -1;
@@ -1231,6 +1430,9 @@ module.exports = Pawn;
     //Else just draw it normal
     if(this.isActive()){
       canvas.drawSquare(this.position.x * squareSize, y * squareSize, squareSize - 10, "red");
+      this.validSquares.forEach(function(s){
+        canvas.drawSquare(s[0] * squareSize, that.translate(s[1], flip) * squareSize, squareSize, "rgba(46, 96, 197, 0.7)");
+      });
     }else{
       canvas.drawSquare(this.position.x * squareSize, y * squareSize, squareSize - 10, this.color);
     }
@@ -1275,19 +1477,24 @@ module.exports = Pawn;
       //4 rooks
       this._initRooks();
       //16 pawns
-      this._initPawns();
+      //this._initPawns();
 
-      $h.events.listen("squareclick", this.checkSquareClick.bind(this));
+      $h.events.listen("squareclick", this.handleSquareClick.bind(this));
 
     },
-    checkSquareClick: function(x, y){
+    //See if the the square click event clicks on a piece.
+    handleSquareClick: function(x, y){
       var piece = this.at(x,y);
-
+      //If there is a pice at that square
       if(piece){
+        //Check that currentActive is intialized
         if(this.currentActive){
+          //Set whatever is active as inactive
           this.currentActive.setInactive();
         }
+        //Set the new active piece
         this.currentActive = piece;
+        //Set is as active
         piece.setActive();
       }
     },
@@ -1300,32 +1507,27 @@ module.exports = Pawn;
       }
       return this.board[y][x] || null;
     },
+
     //Draw the pieces to the board
     //gets the current canvas to draw to and whether or not the board is flipped
     draw: function(canvas, flip){
-      var squareSize = $h.constants("squareSize");
-      var that = this;
-
       this._pieces.forEach(function(p){
-        
         p.draw(canvas, flip);
-       
-        
       });
     },
     flipPos: function(pos){
       return (pos - 7) * -1;
     },
     _initQueens: function(){
-      var q1 = new Queen("white", 3, 0);
-      var q2 = new Queen("black", 3, 7);
+      var q1 = new Queen("white", 3, 0, this);
+      var q2 = new Queen("black", 3, 7, this);
       this._pieces.push(q1,q2);
       this.board[0][3] = q1;
       this.board[7][3] = q2;
     },
     _initKings: function(){
-      var k1 = new King("white", 4, 0);
-      var k2 = new King("black", 4, 7);
+      var k1 = new King("white", 4, 0, this);
+      var k2 = new King("black", 4, 7, this);
       this._pieces.push(k1, k2);
       this.board[0][4] = k1;
       this.board[7][4] = k2;
@@ -1338,10 +1540,10 @@ module.exports = Pawn;
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? "white" : "black";
-        b = new Bishop(color, x1, y);
+        b = new Bishop(color, x1, y, this);
         this._pieces.push(b);
         this.board[y][x1] = b;
-        b = new Bishop(color, x2, y);
+        b = new Bishop(color, x2, y, this);
         this._pieces.push(b);
         this.board[y][x2] = b;
         y = 7;
@@ -1355,10 +1557,10 @@ module.exports = Pawn;
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? "white" : "black";
-        b = new Knight(color, x1, y);
+        b = new Knight(color, x1, y, this);
         this._pieces.push(b);
         this.board[y][x1] = b;
-        b = new Knight(color, x2, y);
+        b = new Knight(color, x2, y, this);
         this._pieces.push(b);
         this.board[y][x2] = b;
         y = 7;
@@ -1372,10 +1574,10 @@ module.exports = Pawn;
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? "white" : "black";
-        b = new Rook(color, x1, y);
+        b = new Rook(color, x1, y, this);
         this._pieces.push(b);
         this.board[y][x1] = b;
-        b = new Rook(color, x2, y);
+        b = new Rook(color, x2, y, this);
         this._pieces.push(b);
         this.board[y][x2] = b;
         y = 7;
@@ -1387,7 +1589,7 @@ module.exports = Pawn;
       var p;
       for(var i=0; i<2; i++){
         for(var j=0; j<8; j++){
-          p = new Pawn(team, j, row);
+          p = new Pawn(team, j, row, this);
           this._pieces.push(p);
           this.board[row][j] = p;
         }
@@ -1402,15 +1604,28 @@ var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
 function Queen(team, x, y){
-  Piece.call(this, team, x, y);
+  console.log(arguments);
+  Piece.apply(this, arguments);
 }
 $h.inherit(Piece, Queen);
 //Returns an array of all possible x,y pairs the queen can move
-Queen.prototype.moves = function(board){
+Queen.prototype.calcMoves = function(){
+  //Valid squares
+  var squares = [];
   //Go up
-  //Go down
-  //Go left
+
+  squares = squares.concat(this.checkUp(7));
+  squares = squares.concat(this.checkLeft(7));
+  squares = squares.concat(this.checkDown(7));
+  squares = squares.concat(this.checkRight(7));
+  squares = squares.concat(this.checkDiagUpLeft(7));
+  squares = squares.concat(this.checkDiagUpRight(7));
+  squares = squares.concat(this.checkDiagDownLeft(7));
+  squares = squares.concat(this.checkDiagDownRight(7));
+  this.validSquares = squares;
 };
+
+
 
 module.exports = Queen;
 },{"../lib/headOn.js":1,"./piece.js":8}],11:[function(require,module,exports){
@@ -1418,14 +1633,20 @@ var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
 function Rook(team, x, y){
-  Piece.call(this, team, x, y);
+  Piece.apply(this, arguments);
 }
 $h.inherit(Piece, Rook);
 //Returns an array of all possible x,y pairs the Rook can move
-Rook.prototype.moves = function(board){
+Rook.prototype.calcMoves = function(){
+   var squares = [];
   //Go up
-  //Go down
-  //Go left
+
+  squares = squares.concat(this.checkUp(7));
+  squares = squares.concat(this.checkLeft(7));
+  squares = squares.concat(this.checkDown(7));
+  squares = squares.concat(this.checkRight(7));
+  
+  this.validSquares = squares;
 };
 
 module.exports = Rook;
