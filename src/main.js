@@ -2,19 +2,28 @@
   "use strict";
   var $h = require("../lib/headOn.js");
   var canvasSize = 800;
+  var gameRunner = require("./game_runner.js");
   var board = require("./board.js");
   var pieces = require("./pieces.js");
   var camera = new $h.Camera(canvasSize, canvasSize);
   var canvas = $h.canvas.create("main", canvasSize, canvasSize, camera);
   var gameHTMLNode = document.getElementById("game");
+  var TEAMS = {white:{}, black:{}};
+  //Make an enum of the teams kind of hacky but it will work
+  Object.freeze(TEAMS);
+  window.TEAMS = TEAMS;
   $h.constants("squareSize", canvasSize/8);
-  board.setSquareSize($h.constants("squareSize"));
   canvas.append("#game");
+  board.setSquareSize($h.constants("squareSize"));
   gameHTMLNode.style.width = canvasSize;
   gameHTMLNode.style.height = canvasSize;
+
   board.setWhiteColor("#440663");
   board.setBlackColor("#CCCCCC");
+
+
   pieces.init();
+  gameRunner.init(pieces);
   registerClicks(canvas, board);
   $h.render(function(){
     board.draw(canvas);

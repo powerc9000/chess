@@ -1050,7 +1050,7 @@ Bishop.prototype.calcMoves = function(board){
 };
 
 module.exports = Bishop;
-},{"../lib/headOn.js":1,"./piece.js":8}],3:[function(require,module,exports){
+},{"../lib/headOn.js":1,"./piece.js":9}],3:[function(require,module,exports){
 var $h = require("../lib/headOn.js");
 module.exports = {
   squareSize:10,
@@ -1106,6 +1106,40 @@ module.exports = {
 
 };
 },{"../lib/headOn.js":1}],4:[function(require,module,exports){
+(function(){
+  "use strict";
+  var $h = require("../lib/headOn.js");
+  var gameRunner = {
+    init: function(pieces){
+      this.pieces = pieces;
+      $h.events.listen("squareclick", this.handleSquareClick.bind(this));
+    },
+    //See if the the square click event clicks on a piece.
+    handleSquareClick: function(x, y){
+      var piece = this.pieces.at(x,y);
+      //If there is a pice at that square
+      if(piece){
+        //Check that currentActive is intialized
+        if(this.currentActive){
+          //Set whatever is active as inactive 
+          this.currentActive.setInactive();
+        }
+        //Set the new active piece
+        this.currentActive = piece;
+        //Set is as active
+        piece.setActive();
+      }else if(this.currentActive){
+        this.pieces.move(this.currentActive, x, y);
+        this.currentActive.setInactive();
+        this.currentActive = null;
+      }
+    }
+  };
+
+  module.exports = gameRunner;
+}());
+
+},{"../lib/headOn.js":1}],5:[function(require,module,exports){
 var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
@@ -1129,7 +1163,7 @@ King.prototype.calcMoves = function(){
 };
 
 module.exports = King;
-},{"../lib/headOn.js":1,"./piece.js":8}],5:[function(require,module,exports){
+},{"../lib/headOn.js":1,"./piece.js":9}],6:[function(require,module,exports){
 var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
@@ -1185,24 +1219,33 @@ Knight.prototype.calcMoves = function(board){
 };
 
 module.exports = Knight;
-},{"../lib/headOn.js":1,"./piece.js":8}],6:[function(require,module,exports){
+},{"../lib/headOn.js":1,"./piece.js":9}],7:[function(require,module,exports){
 (function(){
   "use strict";
   var $h = require("../lib/headOn.js");
   var canvasSize = 800;
+  var gameRunner = require("./game_runner.js");
   var board = require("./board.js");
   var pieces = require("./pieces.js");
   var camera = new $h.Camera(canvasSize, canvasSize);
   var canvas = $h.canvas.create("main", canvasSize, canvasSize, camera);
   var gameHTMLNode = document.getElementById("game");
+  var TEAMS = {white:{}, black:{}};
+  //Make an enum of the teams kind of hacky but it will work
+  Object.freeze(TEAMS);
+  window.TEAMS = TEAMS;
   $h.constants("squareSize", canvasSize/8);
-  board.setSquareSize($h.constants("squareSize"));
   canvas.append("#game");
+  board.setSquareSize($h.constants("squareSize"));
   gameHTMLNode.style.width = canvasSize;
   gameHTMLNode.style.height = canvasSize;
+
   board.setWhiteColor("#440663");
   board.setBlackColor("#CCCCCC");
+
+
   pieces.init();
+  gameRunner.init(pieces);
   registerClicks(canvas, board);
   $h.render(function(){
     board.draw(canvas);
@@ -1229,7 +1272,7 @@ module.exports = Knight;
 }());
 
 
-},{"../lib/headOn.js":1,"./board.js":3,"./pieces.js":9}],7:[function(require,module,exports){
+},{"../lib/headOn.js":1,"./board.js":3,"./game_runner.js":4,"./pieces.js":10}],8:[function(require,module,exports){
 var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
@@ -1254,7 +1297,7 @@ Pawn.prototype.calcMoves = function(){
 };
 
 module.exports = Pawn;
-},{"../lib/headOn.js":1,"./piece.js":8}],8:[function(require,module,exports){
+},{"../lib/headOn.js":1,"./piece.js":9}],9:[function(require,module,exports){
 (function(){
   "use strict";
   var $h = require("../lib/headOn.js");
@@ -1265,7 +1308,7 @@ module.exports = Pawn;
   function Piece(team, x, y, pieces, color){
     console.log(team, x, y, color);
     this.team = team;
-    this.color = color || defaults[team];
+    this.color = color || pieces.getTeamColor(team);
     this.position = $h.Vector(x,y);
     this._active = false;
     this.pieces = pieces;
@@ -1465,6 +1508,29 @@ module.exports = Pawn;
     var yValid = (y >= 0 && y < 8);
     return xValid && yValid;
   };
+  //Check if a piece can move to a square.
+  //Will need to add a provision for testing if we will be in check
+  Piece.prototype.canMoveTo = function(x, y){
+    //Array.some return true if inside the loop you return true 
+    //It then termitates
+    //Or else it returns false if we never return true
+    return this.validSquares.some(function(s){
+      if(s[0] === x && s[1] === y){
+        return true;
+      }
+    });
+  };
+  //Moves a piece to a space pice will check if it can move there
+  //Returns if it moved successfully
+  Piece.prototype.moveTo = function(x, y){
+    if(this.canMoveTo(x,y)){
+      this.position.x = x;
+      this.position.y = y;
+      return true;
+    }else{
+      return false;
+    }
+  };
   Piece.prototype.draw = function(canvas, flip){
     var that = this;
     //Canvas x,y starts at the top left but chess x,y starts at the bottom left
@@ -1487,7 +1553,7 @@ module.exports = Pawn;
   module.exports = Piece;
 }());
 
-},{"../lib/headOn.js":1}],9:[function(require,module,exports){
+},{"../lib/headOn.js":1}],10:[function(require,module,exports){
 (function(){
   "use strict";
 
@@ -1502,6 +1568,14 @@ module.exports = Pawn;
     //Initializes all the pices to their propper place on the board
     _pieces: [],
     teamColor:{white:"white", black:"black"},
+    getTeamColor: function(team){
+      switch(team){
+        case TEAMS.white:
+          return this.teamColor.white;
+        case TEAMS.black:
+          return this.teamColor.black;
+      }
+    },
     init: function(){
       //represent the board as a 2d array
       this.board = [];
@@ -1524,23 +1598,15 @@ module.exports = Pawn;
       //16 pawns
       //this._initPawns();
 
-      $h.events.listen("squareclick", this.handleSquareClick.bind(this));
-
     },
-    //See if the the square click event clicks on a piece.
-    handleSquareClick: function(x, y){
-      var piece = this.at(x,y);
-      //If there is a pice at that square
-      if(piece){
-        //Check that currentActive is intialized
-        if(this.currentActive){
-          //Set whatever is active as inactive
-          this.currentActive.setInactive();
-        }
-        //Set the new active piece
-        this.currentActive = piece;
-        //Set is as active
-        piece.setActive();
+    //Moves a passed in piece to the square passed to it
+    //Updates its board representation
+    move: function(piece, x, y){
+      var oldx = piece.position.x;
+      var oldy = piece.position.y;
+      if(piece.moveTo(x,y)){
+        this.board[y][x] = piece;
+        this.board[oldy][oldx] = null;
       }
     },
     //returns the piece if there is a piece there otherwise null
@@ -1564,15 +1630,15 @@ module.exports = Pawn;
       return (pos - 7) * -1;
     },
     _initQueens: function(){
-      var q1 = new Queen("white", 3, 0, this);
-      var q2 = new Queen("black", 3, 7, this);
+      var q1 = new Queen(TEAMS.white, 3, 0, this);
+      var q2 = new Queen(TEAMS.black, 3, 7, this);
       this._pieces.push(q1,q2);
       this.board[0][3] = q1;
       this.board[7][3] = q2;
     },
     _initKings: function(){
-      var k1 = new King("white", 4, 0, this);
-      var k2 = new King("black", 4, 7, this);
+      var k1 = new King(TEAMS.white, 4, 0, this);
+      var k2 = new King(TEAMS.black, 4, 7, this);
       this._pieces.push(k1, k2);
       this.board[0][4] = k1;
       this.board[7][4] = k2;
@@ -1584,7 +1650,7 @@ module.exports = Pawn;
       var y = 0;
       var color;
       for(var i=0; i<2; i++){
-        color = (i === 0) ? "white" : "black";
+        color = (i === 0) ? TEAMS.white : TEAMS.black;
         b = new Bishop(color, x1, y, this);
         this._pieces.push(b);
         this.board[y][x1] = b;
@@ -1601,7 +1667,7 @@ module.exports = Pawn;
       var y = 3;
       var color;
       for(var i=0; i<2; i++){
-        color = (i === 0) ? "white" : "black";
+        color = (i === 0) ? TEAMS.white : TEAMS.black;
         b = new Knight(color, x1, y, this);
         this._pieces.push(b);
         this.board[y][x1] = b;
@@ -1618,7 +1684,7 @@ module.exports = Pawn;
       var y = 0;
       var color;
       for(var i=0; i<2; i++){
-        color = (i === 0) ? "white" : "black";
+        color = (i === 0) ? TEAMS.white : TEAMS.black;
         b = new Rook(color, x1, y, this);
         this._pieces.push(b);
         this.board[y][x1] = b;
@@ -1630,7 +1696,7 @@ module.exports = Pawn;
     },
     _initPawns: function(){
       var row = 1;
-      var team = "white";
+      var team = TEAMS.white;
       var p;
       for(var i=0; i<2; i++){
         for(var j=0; j<8; j++){
@@ -1639,12 +1705,12 @@ module.exports = Pawn;
           this.board[row][j] = p;
         }
         row = 6;
-        team = "black";
+        team = TEAMS.black;
       }
     }
   };
 }());
-},{"../lib/headOn.js":1,"./bishop.js":2,"./king.js":4,"./knight.js":5,"./pawn.js":7,"./queen.js":10,"./rook.js":11}],10:[function(require,module,exports){
+},{"../lib/headOn.js":1,"./bishop.js":2,"./king.js":5,"./knight.js":6,"./pawn.js":8,"./queen.js":11,"./rook.js":12}],11:[function(require,module,exports){
 var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
@@ -1673,7 +1739,7 @@ Queen.prototype.calcMoves = function(){
 
 
 module.exports = Queen;
-},{"../lib/headOn.js":1,"./piece.js":8}],11:[function(require,module,exports){
+},{"../lib/headOn.js":1,"./piece.js":9}],12:[function(require,module,exports){
 var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
@@ -1695,4 +1761,4 @@ Rook.prototype.calcMoves = function(){
 };
 
 module.exports = Rook;
-},{"../lib/headOn.js":1,"./piece.js":8}]},{},[6])
+},{"../lib/headOn.js":1,"./piece.js":9}]},{},[7])

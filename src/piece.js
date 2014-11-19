@@ -8,7 +8,7 @@
   function Piece(team, x, y, pieces, color){
     console.log(team, x, y, color);
     this.team = team;
-    this.color = color || defaults[team];
+    this.color = color || pieces.getTeamColor(team);
     this.position = $h.Vector(x,y);
     this._active = false;
     this.pieces = pieces;
@@ -207,6 +207,29 @@
     var xValid = (x >= 0 && x < 8);
     var yValid = (y >= 0 && y < 8);
     return xValid && yValid;
+  };
+  //Check if a piece can move to a square.
+  //Will need to add a provision for testing if we will be in check
+  Piece.prototype.canMoveTo = function(x, y){
+    //Array.some return true if inside the loop you return true 
+    //It then termitates
+    //Or else it returns false if we never return true
+    return this.validSquares.some(function(s){
+      if(s[0] === x && s[1] === y){
+        return true;
+      }
+    });
+  };
+  //Moves a piece to a space pice will check if it can move there
+  //Returns if it moved successfully
+  Piece.prototype.moveTo = function(x, y){
+    if(this.canMoveTo(x,y)){
+      this.position.x = x;
+      this.position.y = y;
+      return true;
+    }else{
+      return false;
+    }
   };
   Piece.prototype.draw = function(canvas, flip){
     var that = this;
