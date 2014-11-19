@@ -1057,8 +1057,8 @@ module.exports = {
   flipped:false,
   _whiteColor: "white",
   _blackColor: "black",
-  flipBoard:function(){
-    flipped = !flipped;
+  flip:function(){
+    this.flipped = !this.flipped;
   },
   isFlipped: function(){
     return this.flipped;
@@ -1239,7 +1239,6 @@ module.exports = Knight;
   board.setSquareSize($h.constants("squareSize"));
   gameHTMLNode.style.width = canvasSize;
   gameHTMLNode.style.height = canvasSize;
-
   board.setWhiteColor("#440663");
   board.setBlackColor("#CCCCCC");
 
@@ -1286,7 +1285,7 @@ Pawn.prototype.calcMoves = function(){
   var squares = [];
   //Go up
   var range = (!this.moved) ? 2 : 1;
-  if(this.team === "white"){
+  if(this.team === TEAMS.white){
     squares = squares.concat(this.checkUp(range));
   }else{
     squares = squares.concat(this.checkDown(range));
@@ -1294,6 +1293,10 @@ Pawn.prototype.calcMoves = function(){
   
   
   this.validSquares = squares;
+};
+Pawn.prototype.moveTo = function(x, y){
+  this.moved = true;
+  return Piece.prototype.moveTo.call(this, x, y);
 };
 
 module.exports = Pawn;
@@ -1596,7 +1599,7 @@ module.exports = Pawn;
       //4 rooks
       this._initRooks();
       //16 pawns
-      //this._initPawns();
+      this._initPawns();
 
     },
     //Moves a passed in piece to the square passed to it
@@ -1664,7 +1667,7 @@ module.exports = Pawn;
       var b;
       var x1 = 1;
       var x2 = 6;
-      var y = 3;
+      var y = 0;
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? TEAMS.white : TEAMS.black;

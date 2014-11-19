@@ -40,7 +40,7 @@
       //4 rooks
       this._initRooks();
       //16 pawns
-      //this._initPawns();
+      this._initPawns();
 
     },
     //Moves a passed in piece to the square passed to it
@@ -108,7 +108,7 @@
       var b;
       var x1 = 1;
       var x2 = 6;
-      var y = 3;
+      var y = 0;
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? TEAMS.white : TEAMS.black;

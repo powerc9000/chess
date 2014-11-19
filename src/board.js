@@ -4,8 +4,8 @@ module.exports = {
   flipped:false,
   _whiteColor: "white",
   _blackColor: "black",
-  flipBoard:function(){
-    flipped = !flipped;
+  flip:function(){
+    this.flipped = !this.flipped;
   },
   isFlipped: function(){
     return this.flipped;

@@ -11,7 +11,7 @@ Pawn.prototype.calcMoves = function(){
   var squares = [];
   //Go up
   var range = (!this.moved) ? 2 : 1;
-  if(this.team === "white"){
+  if(this.team === TEAMS.white){
     squares = squares.concat(this.checkUp(range));
   }else{
     squares = squares.concat(this.checkDown(range));
@@ -19,6 +19,10 @@ Pawn.prototype.calcMoves = function(){
   
   
   this.validSquares = squares;
+};
+Pawn.prototype.moveTo = function(x, y){
+  this.moved = true;
+  return Piece.prototype.moveTo.call(this, x, y);
 };
 
 module.exports = Pawn;

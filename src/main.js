@@ -17,7 +17,6 @@
   board.setSquareSize($h.constants("squareSize"));
   gameHTMLNode.style.width = canvasSize;
   gameHTMLNode.style.height = canvasSize;
-
   board.setWhiteColor("#440663");
   board.setBlackColor("#CCCCCC");
 
