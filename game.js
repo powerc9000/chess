@@ -1138,10 +1138,50 @@ function Knight(team, x, y){
 }
 $h.inherit(Piece, Knight);
 //Returns an array of all possible x,y pairs the Knight can move
-Knight.prototype.moves = function(board){
-  //Go up
-  //Go down
-  //Go left
+Knight.prototype.calcMoves = function(board){
+  "use strict";
+  
+  var squares = [];
+  var x       = this.position.x;
+  var y       = this.position.y;
+  var newx;
+  var newy;
+  var p;
+  var angle = 0;
+  var sin;
+  var cos;
+  var coord1;
+  var coord2;
+  for(var i = 0; i<4; i++, angle+=Math.PI/2){
+    sin = Math.round(Math.sin(angle));
+    cos = Math.round(Math.cos(angle));
+    //Go around the cirle starting at 0 degrees
+    //Check 0, 90, 180, 270
+
+    //If sin === 0 that means we are at 0 or 180 degrees
+    //x goes over 2 and y goes up or down 1
+    if(sin === 0){
+      newx = x + cos * 2;
+      coord1 = [newx, y+1];
+      coord2 = [newx, y-1];
+    }else{//We are at 90 or 270 degrees y goes up or down 2 and x goes up or down 1
+      newy = y + sin * 2;
+      coord1 = [x-1, newy];
+      coord2 = [x+1, newy];
+    }
+    //Check for collisions and if we are in bounds
+    p = this.pieces.at(coord1[0], coord1[1]);
+    if(this.inBounds(coord1[0], coord1[1]) && (!p || p.team != this.team)){
+      squares.push(coord1);
+    }
+    p = this.pieces.at(coord2[0], coord2[1]);
+    if(this.inBounds(coord2[0], coord2[1]) && (!p || p.team != this.team)){
+      squares.push(coord2);
+    }
+    
+  }
+  console.log(squares);
+  this.validSquares = squares;
 };
 
 module.exports = Knight;
@@ -1299,7 +1339,7 @@ module.exports = Pawn;
         squares.push([tile, this.position.y]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tile, this.position.y]);
         }
         break;
       }
@@ -1319,7 +1359,7 @@ module.exports = Pawn;
         squares.push([tile, this.position.y]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tile, this.position.y]);
         }
         break;
       }
@@ -1340,7 +1380,7 @@ module.exports = Pawn;
         squares.push([tilex, tiley]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tilex, tiley]);
         }
         break;
       }
@@ -1363,7 +1403,7 @@ module.exports = Pawn;
         squares.push([tilex, tiley]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tilex, tiley]);
         }
         break;
       }
@@ -1385,7 +1425,7 @@ module.exports = Pawn;
         squares.push([tilex, tiley]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tilex, tiley]);
         }
         break;
       }
@@ -1401,13 +1441,13 @@ module.exports = Pawn;
     var tilex = this.position.x - 1;
     var tiley = this.position.y - 1;
     var dist = 1;
-    while(tilex >= 0 && tiley >= 0 && dist <= range){
+    while(this.inBounds(tilex, tiley) && dist <= range){
       p = this.pieces.at(tilex, tiley);
       if(!p){
         squares.push([tilex, tiley]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tilex, tiley]);
         }
         break;
       }
@@ -1419,6 +1459,11 @@ module.exports = Pawn;
   };
   Piece.prototype.translate = function(val, flip){
     return (flip) ? val : (val - 7) * -1;
+  };
+  Piece.prototype.inBounds = function(x, y){
+    var xValid = (x >= 0 && x < 8);
+    var yValid = (y >= 0 && y < 8);
+    return xValid && yValid;
   };
   Piece.prototype.draw = function(canvas, flip){
     var that = this;
@@ -1553,7 +1598,7 @@ module.exports = Pawn;
       var b;
       var x1 = 1;
       var x2 = 6;
-      var y = 0;
+      var y = 3;
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? "white" : "black";

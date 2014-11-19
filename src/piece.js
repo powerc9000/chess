@@ -82,7 +82,7 @@
         squares.push([tile, this.position.y]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tile, this.position.y]);
         }
         break;
       }
@@ -102,7 +102,7 @@
         squares.push([tile, this.position.y]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tile, this.position.y]);
         }
         break;
       }
@@ -123,7 +123,7 @@
         squares.push([tilex, tiley]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tilex, tiley]);
         }
         break;
       }
@@ -146,7 +146,7 @@
         squares.push([tilex, tiley]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tilex, tiley]);
         }
         break;
       }
@@ -168,7 +168,7 @@
         squares.push([tilex, tiley]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tilex, tiley]);
         }
         break;
       }
@@ -184,13 +184,13 @@
     var tilex = this.position.x - 1;
     var tiley = this.position.y - 1;
     var dist = 1;
-    while(tilex >= 0 && tiley >= 0 && dist <= range){
+    while(this.inBounds(tilex, tiley) && dist <= range){
       p = this.pieces.at(tilex, tiley);
       if(!p){
         squares.push([tilex, tiley]);
       }else{
         if(p.team != this.team){
-          squares.push([this.position.x, tile]);
+          squares.push([tilex, tiley]);
         }
         break;
       }
@@ -202,6 +202,11 @@
   };
   Piece.prototype.translate = function(val, flip){
     return (flip) ? val : (val - 7) * -1;
+  };
+  Piece.prototype.inBounds = function(x, y){
+    var xValid = (x >= 0 && x < 8);
+    var yValid = (y >= 0 && y < 8);
+    return xValid && yValid;
   };
   Piece.prototype.draw = function(canvas, flip){
     var that = this;

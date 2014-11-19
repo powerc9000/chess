@@ -108,7 +108,7 @@
       var b;
       var x1 = 1;
       var x2 = 6;
-      var y = 0;
+      var y = 3;
       var color;
       for(var i=0; i<2; i++){
         color = (i === 0) ? "white" : "black";
