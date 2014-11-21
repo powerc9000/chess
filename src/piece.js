@@ -6,13 +6,14 @@
     "black": "black"
   };
   function Piece(team, x, y, pieces, color){
-    console.log(team, x, y, color);
     this.team = team;
     this.color = color || pieces.getTeamColor(team);
     this.position = $h.Vector(x,y);
     this._active = false;
     this.pieces = pieces;
     this.validSquares = [];
+    this._alive = true;
+    this.takenBy = null;
   }
 
   Piece.prototype.getTeam = function(){
@@ -231,7 +232,14 @@
       return false;
     }
   };
+  Piece.prototype.taken = function(piece){
+    this._alive = false;
+    this.takenBy = piece;
+  };
   Piece.prototype.draw = function(canvas, flip){
+    //If we are a taken piece dont draw us
+    //Will probably will set to have it draw to the side of the screen
+    if(!this._alive) return;
     var that = this;
     //Canvas x,y starts at the top left but chess x,y starts at the bottom left
     //So if the board isnt flipped we need to flip the y position of the piece to print in properly

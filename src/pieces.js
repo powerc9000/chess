@@ -20,9 +20,13 @@
           return this.teamColor.black;
       }
     },
+    piecesTaken: [],
+    board: [],
     init: function(){
       //represent the board as a 2d array
       this.board = [];
+      //Pieces that have been taken and are no longer in play
+      this.piecesTaken = [];
       //set up the board propper we can put stuff in it.
       for(var i = 0; i<8; i++){
         for(var j = 0; j<8; j++){
@@ -48,9 +52,19 @@
     move: function(piece, x, y){
       var oldx = piece.position.x;
       var oldy = piece.position.y;
+      var pieceAtMovementSpace;
       if(piece.moveTo(x,y)){
+        //Check if we are taking another piece
+        pieceAtMovementSpace = this.at(x, y);
+        if(pieceAtMovementSpace){
+          pieceAtMovementSpace.taken(piece);
+          this.piecesTaken.push(pieceAtMovementSpace);
+        }
         this.board[y][x] = piece;
         this.board[oldy][oldx] = null;
+        return true;
+      }else{
+        return false;
       }
     },
     //returns the piece if there is a piece there otherwise null

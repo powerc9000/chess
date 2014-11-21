@@ -2,7 +2,6 @@ var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
 function Queen(team, x, y){
-  console.log(arguments);
   Piece.apply(this, arguments);
 }
 $h.inherit(Piece, Queen);

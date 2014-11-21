@@ -604,7 +604,6 @@
         height: canvas.height,
         camera: camera
       };
-      console.log(ctx.imageSmoothingEnabled)
       return headOn.canvas(name);
     };
     headOn.canvas.prototype = {
@@ -1113,12 +1112,14 @@ module.exports = {
     init: function(pieces){
       this.pieces = pieces;
       $h.events.listen("squareclick", this.handleSquareClick.bind(this));
+      this.turn = TEAMS.white;
     },
     //See if the the square click event clicks on a piece.
     handleSquareClick: function(x, y){
       var piece = this.pieces.at(x,y);
       //If there is a pice at that square
-      if(piece){
+      //and It's that pieces teams turn
+      if(piece && piece.getTeam() === this.turn){
         //Check that currentActive is intialized
         if(this.currentActive){
           //Set whatever is active as inactive 
@@ -1129,9 +1130,27 @@ module.exports = {
         //Set is as active
         piece.setActive();
       }else if(this.currentActive){
-        this.pieces.move(this.currentActive, x, y);
+        //If we moved successfully. It's the next player's turn
+        if(this.pieces.move(this.currentActive, x, y)){
+          this.nextPlayerTurn();
+        }
+        //If we off click or it is the next player's turn
+        //We dont have an active piece anymore
         this.currentActive.setInactive();
         this.currentActive = null;
+      }
+    },
+    nextPlayerTurn: function(){
+      //Remeber to add break statements for your fucking cases
+      switch(this.turn){
+        case TEAMS.white:
+          this.turn = TEAMS.black;
+          break;
+        case TEAMS.black:
+          this.turn = TEAMS.white;
+          break;
+        default:
+          assert(false, "Invalid team");
       }
     }
   };
@@ -1234,6 +1253,16 @@ module.exports = Knight;
   //Make an enum of the teams kind of hacky but it will work
   Object.freeze(TEAMS);
   window.TEAMS = TEAMS;
+  window.assert = function assert(condition, message){
+    if(!condition){
+      message = message || "Assertion failed";
+      if(typeof Error !== "undefined"){
+        throw new Error(message);
+      }
+      //Fallback;
+      throw message;
+    }
+  };
   $h.constants("squareSize", canvasSize/8);
   canvas.append("#game");
   board.setSquareSize($h.constants("squareSize"));
@@ -1285,18 +1314,49 @@ Pawn.prototype.calcMoves = function(){
   var squares = [];
   //Go up
   var range = (!this.moved) ? 2 : 1;
+  var dx;
+  var tiley;
+  var tilex;
+  var pieceAt;
   if(this.team === TEAMS.white){
-    squares = squares.concat(this.checkUp(range));
+      dx = 1;
   }else{
-    squares = squares.concat(this.checkDown(range));
+    dx = -1;
+  }
+  //Move the correct direction to look at the tile
+  tiley = this.position.y + dx;
+  //Go however many squares we can look forward and select valid spaces
+  for(var i = 1; i<=range; i++){
+    //If there isnt a piece blocking us add it to our valid list
+    if(!this.pieces.at(this.position.x, tiley)){
+      squares.push([this.position.x, tiley]);
+    }else{//we can go no farther just break out;
+      break;
+    }
+    tiley += dx;
   }
   
-  
+  //Now we check the diagnals
+  tiley = this.position.y + dx;
+  tilex = this.position.x;
+  pieceAt = this.pieces.at(tilex+1, tiley)
+  if(pieceAt && pieceAt.getTeam() !== this.team){
+    squares.push([tilex+1, tiley])
+  }
+  pieceAt = this.pieces.at(tilex-1, tiley)
+  if(pieceAt && pieceAt.getTeam() !== this.team){
+    squares.push([tilex-1, tiley])
+  }
   this.validSquares = squares;
 };
 Pawn.prototype.moveTo = function(x, y){
-  this.moved = true;
-  return Piece.prototype.moveTo.call(this, x, y);
+  
+  if(Piece.prototype.moveTo.call(this, x, y)){
+    this.moved = true;
+    return true;
+  }else{
+    return false;
+  }
 };
 
 module.exports = Pawn;
@@ -1309,13 +1369,14 @@ module.exports = Pawn;
     "black": "black"
   };
   function Piece(team, x, y, pieces, color){
-    console.log(team, x, y, color);
     this.team = team;
     this.color = color || pieces.getTeamColor(team);
     this.position = $h.Vector(x,y);
     this._active = false;
     this.pieces = pieces;
     this.validSquares = [];
+    this._alive = true;
+    this.takenBy = null;
   }
 
   Piece.prototype.getTeam = function(){
@@ -1534,7 +1595,14 @@ module.exports = Pawn;
       return false;
     }
   };
+  Piece.prototype.taken = function(piece){
+    this._alive = false;
+    this.takenBy = piece;
+  };
   Piece.prototype.draw = function(canvas, flip){
+    //If we are a taken piece dont draw us
+    //Will probably will set to have it draw to the side of the screen
+    if(!this._alive) return;
     var that = this;
     //Canvas x,y starts at the top left but chess x,y starts at the bottom left
     //So if the board isnt flipped we need to flip the y position of the piece to print in properly
@@ -1579,9 +1647,13 @@ module.exports = Pawn;
           return this.teamColor.black;
       }
     },
+    piecesTaken: [],
+    board: [],
     init: function(){
       //represent the board as a 2d array
       this.board = [];
+      //Pieces that have been taken and are no longer in play
+      this.piecesTaken = [];
       //set up the board propper we can put stuff in it.
       for(var i = 0; i<8; i++){
         for(var j = 0; j<8; j++){
@@ -1607,9 +1679,19 @@ module.exports = Pawn;
     move: function(piece, x, y){
       var oldx = piece.position.x;
       var oldy = piece.position.y;
+      var pieceAtMovementSpace;
       if(piece.moveTo(x,y)){
+        //Check if we are taking another piece
+        pieceAtMovementSpace = this.at(x, y);
+        if(pieceAtMovementSpace){
+          pieceAtMovementSpace.taken(piece);
+          this.piecesTaken.push(pieceAtMovementSpace);
+        }
         this.board[y][x] = piece;
         this.board[oldy][oldx] = null;
+        return true;
+      }else{
+        return false;
       }
     },
     //returns the piece if there is a piece there otherwise null
@@ -1718,7 +1800,6 @@ var $h = require("../lib/headOn.js");
 var Piece = require("./piece.js");
 
 function Queen(team, x, y){
-  console.log(arguments);
   Piece.apply(this, arguments);
 }
 $h.inherit(Piece, Queen);

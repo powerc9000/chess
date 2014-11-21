@@ -12,6 +12,16 @@
   //Make an enum of the teams kind of hacky but it will work
   Object.freeze(TEAMS);
   window.TEAMS = TEAMS;
+  window.assert = function assert(condition, message){
+    if(!condition){
+      message = message || "Assertion failed";
+      if(typeof Error !== "undefined"){
+        throw new Error(message);
+      }
+      //Fallback;
+      throw message;
+    }
+  };
   $h.constants("squareSize", canvasSize/8);
   canvas.append("#game");
   board.setSquareSize($h.constants("squareSize"));
