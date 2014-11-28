@@ -3,6 +3,7 @@ var Piece = require("./piece.js");
 
 function Rook(team, x, y){
   Piece.apply(this, arguments);
+  this.attacksOrtho = true;
 }
 $h.inherit(Piece, Rook);
 //Returns an array of all possible x,y pairs the Rook can move
@@ -10,10 +11,10 @@ Rook.prototype.calcMoves = function(){
    var squares = [];
   //Go up
 
-  squares = squares.concat(this.checkUp(7));
-  squares = squares.concat(this.checkLeft(7));
-  squares = squares.concat(this.checkDown(7));
-  squares = squares.concat(this.checkRight(7));
+  this.checkUp(7, squares);
+  this.checkLeft(7, squares);
+  this.checkDown(7, squares);
+  this.checkRight(7, squares);
   
   this.validSquares = squares;
 };

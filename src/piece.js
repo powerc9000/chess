@@ -1,5 +1,6 @@
 (function(){
   "use strict";
+  var count = 0;
   var $h = require("../lib/headOn.js");
   var defaults = {
     "white": "white",
@@ -14,6 +15,11 @@
     this.validSquares = [];
     this._alive = true;
     this.takenBy = null;
+    this.attacksOrtho = false;
+    this.attacksDiag = false;
+    this.attacksKnight = false;
+    this.attacksPawn = false;
+    count++;
   }
 
   Piece.prototype.getTeam = function(){
@@ -32,11 +38,11 @@
   Piece.prototype.setInactive = function(){
     this._active = false;
   };
-  Piece.prototype.checkUp = function(range){
-    var squares = [];
+  Piece.prototype.checkUp = function(range, squares){
     var p = null;
     var tile = this.position.y + 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(tile < 8 && dist <= range){
       p = this.pieces.at(this.position.x, tile);
       if(!p){
@@ -50,17 +56,30 @@
       tile++;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkDown = function(range){
-    var squares = [];
+  //In: range out: squares
+  //Returns the piece hit, if there is one
+  Piece.prototype.checkDown = function(range, squares, check){
     var p = null;
     var tile = this.position.y - 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
+    var underAttack;
+    console.log("here", check)
     while(tile >= 0 && dist <= range){
       p = this.pieces.at(this.position.x, tile);
       if(!p){
-        squares.push([this.position.x, tile]);
+        if(!check){
+          underAttack = king.underAttack([this.position.x, this.position.y], [this.position.x, tile]);
+        }
+        if(!underAttack){
+          squares.push([this.position.x, tile]);
+        }else{
+          break;
+        }
+        
+
       }else{
         if(p.team != this.team){
           squares.push([this.position.x, tile]);
@@ -70,17 +89,26 @@
       tile--;
       dist++;
     }
-    return squares;
+    return p;
   };
-   Piece.prototype.checkRight = function(range){
-    var squares = [];
+  
+  Piece.prototype.checkRight = function(range, squares, check){
     var p = null;
     var tile = this.position.x + 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
+    var underAttack;
     while(tile < 8 && dist <= range){
       p = this.pieces.at(tile, this.position.y);
       if(!p){
-        squares.push([tile, this.position.y]);
+        if(check){
+          underAttack = king.underAttack([this.position.x, this.position.y], [tile, this.position.y]);
+        }
+        if(!underAttack){
+          squares.push([tile, this.position.y]);
+        }else{
+          break;
+        }
       }else{
         if(p.team != this.team){
           squares.push([tile, this.position.y]);
@@ -90,10 +118,9 @@
       tile++;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkLeft = function(range){
-    var squares = [];
+  Piece.prototype.checkLeft = function(range, squares){
     var p = null;
     var tile = this.position.x - 1;
     var dist = 1;
@@ -110,14 +137,16 @@
       tile--;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkDiagUpLeft = function(range){
-    var squares = [];
+  Piece.prototype.checkDiagUpLeft = function(range, squares, check){
     var p = null;
     var tilex = this.position.x - 1;
     var tiley = this.position.y + 1;
     var dist = 1;
+    if(check){
+      printBoard();
+    }
     while(tilex >= 0 && tiley < 8 && dist <= range){
       p = this.pieces.at(tilex, tiley);
       if(!p){
@@ -132,11 +161,10 @@
       tiley++;
       dist++;
     }
-    return squares;
+    return p;
   };
 
-  Piece.prototype.checkDiagUpRight = function(range){
-    var squares = [];
+  Piece.prototype.checkDiagUpRight = function(range, squares){
     var p = null;
     var tilex = this.position.x + 1;
     var tiley = this.position.y + 1;
@@ -155,10 +183,9 @@
       tiley++;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkDiagDownRight = function(range){
-    var squares = [];
+  Piece.prototype.checkDiagDownRight = function(range, squares){
     var p = null;
     var tilex = this.position.x + 1;
     var tiley = this.position.y - 1;
@@ -177,10 +204,9 @@
       tiley--;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkDiagDownLeft = function(range){
-    var squares = [];
+  Piece.prototype.checkDiagDownLeft = function(range, squares){
     var p = null;
     var tilex = this.position.x - 1;
     var tiley = this.position.y - 1;
@@ -199,7 +225,7 @@
       tiley--;
       dist++;
     }
-    return squares;
+    return p;
   };
   Piece.prototype.translate = function(val, flip){
     return (flip) ? val : (val - 7) * -1;
@@ -236,6 +262,7 @@
     this._alive = false;
     this.takenBy = piece;
   };
+  
   Piece.prototype.draw = function(canvas, flip){
     //If we are a taken piece dont draw us
     //Will probably will set to have it draw to the side of the screen
@@ -253,7 +280,12 @@
         canvas.drawSquare(s[0] * squareSize, that.translate(s[1], flip) * squareSize, squareSize, "rgba(46, 96, 197, 0.7)");
       });
     }else{
-      canvas.drawSquare(this.position.x * squareSize, y * squareSize, squareSize - 10, this.color);
+      if(this.image){
+        canvas.drawImage(this.image, this.position.x * squareSize, y * squareSize);
+      }else{
+        canvas.drawSquare(this.position.x * squareSize, y * squareSize, squareSize - 10, this.color);
+      }
+      
     }
   };
 

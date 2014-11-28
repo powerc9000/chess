@@ -22,6 +22,8 @@
       throw message;
     }
   };
+  window.STUB = function(){};
+  window.printBoard = function(){pieces.print()}
   $h.constants("squareSize", canvasSize/8);
   canvas.append("#game");
   board.setSquareSize($h.constants("squareSize"));
@@ -30,9 +32,12 @@
   board.setWhiteColor("#440663");
   board.setBlackColor("#CCCCCC");
 
-
-  pieces.init();
-  gameRunner.init(pieces);
+  $h.loadImages([{src:"assests/black_pieces/queen.png", "name": "black_queen"}],function(){}, function(){
+    pieces.init();
+    gameRunner.init(pieces);
+    $h.run();
+  });
+  
   registerClicks(canvas, board);
   $h.render(function(){
     board.draw(canvas);

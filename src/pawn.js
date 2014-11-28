@@ -4,6 +4,7 @@ var Piece = require("./piece.js");
 function Pawn(team, x, y){
   Piece.apply(this, arguments);
   this.moved = false;
+  this.attacksPawn = true;
 }
 $h.inherit(Piece, Pawn);
 //Returns an array of all possible x,y pairs the Pawn can move
@@ -36,13 +37,13 @@ Pawn.prototype.calcMoves = function(){
   //Now we check the diagnals
   tiley = this.position.y + dx;
   tilex = this.position.x;
-  pieceAt = this.pieces.at(tilex+1, tiley)
+  pieceAt = this.pieces.at(tilex+1, tiley);
   if(pieceAt && pieceAt.getTeam() !== this.team){
-    squares.push([tilex+1, tiley])
+    squares.push([tilex+1, tiley]);
   }
-  pieceAt = this.pieces.at(tilex-1, tiley)
+  pieceAt = this.pieces.at(tilex-1, tiley);
   if(pieceAt && pieceAt.getTeam() !== this.team){
-    squares.push([tilex-1, tiley])
+    squares.push([tilex-1, tiley]);
   }
   this.validSquares = squares;
 };

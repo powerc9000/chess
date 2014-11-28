@@ -447,8 +447,11 @@
           loaded = 0;
           imgOnload = function(){
             loaded += 1;
+            //Is this too clever?
+            //Should we not rely on short circut and just use and if?
             progress && progress(loaded, total);
             if(loaded === total){
+              //Same here
               allCallback && allCallback();
               that.imagesLoaded = true;
             }
@@ -476,7 +479,7 @@
             return this._images[image];
           }
           else{
-            return new Image();
+            return null;
           }
         },
 
@@ -1033,6 +1036,7 @@ var Piece = require("./piece.js");
 
 function Bishop(team, x, y){
   Piece.apply(this, arguments);
+  this.attacksDiag = true;
 }
 $h.inherit(Piece, Bishop);
 //Returns an array of all possible x,y pairs the Bishop can move
@@ -1041,10 +1045,10 @@ Bishop.prototype.calcMoves = function(board){
   //Go up
 
  
-  squares = squares.concat(this.checkDiagUpLeft(7));
-  squares = squares.concat(this.checkDiagUpRight(7));
-  squares = squares.concat(this.checkDiagDownLeft(7));
-  squares = squares.concat(this.checkDiagDownRight(7));
+  this.checkDiagUpLeft(7, squares);
+  this.checkDiagUpRight(7, squares);
+  this.checkDiagDownLeft(7, squares);
+  this.checkDiagDownRight(7, squares);
   this.validSquares = squares;
 };
 
@@ -1164,21 +1168,75 @@ var Piece = require("./piece.js");
 
 function King(team, x, y){
   Piece.apply(this, arguments);
+  this.attacksKing = true;
 }
 $h.inherit(Piece, King);
 //Returns an array of all possible x,y pairs the queen can move
 King.prototype.calcMoves = function(){
-   var squares = [];
-  //Go up
-  squares = squares.concat(this.checkUp(1));
-  squares = squares.concat(this.checkLeft(1));
-  squares = squares.concat(this.checkDown(1));
-  squares = squares.concat(this.checkRight(1));
-  squares = squares.concat(this.checkDiagUpLeft(1));
-  squares = squares.concat(this.checkDiagUpRight(1));
-  squares = squares.concat(this.checkDiagDownLeft(1));
-  squares = squares.concat(this.checkDiagDownRight(1));
+  var squares = [];
+  this.checkUp(1, squares);
+  this.checkLeft(1, squares);
+  this.checkDown(1, squares);
+  this.checkRight(1, squares);
+  this.checkDiagUpLeft(1, squares);
+  this.checkDiagUpRight(1, squares);
+  this.checkDiagDownLeft(1, squares);
+  this.checkDiagDownRight(1, squares);
   this.validSquares = squares;
+};
+
+King.prototype.underAttack = function(startPos, endPos){
+  var squares = [];
+  var piece;
+  var attacked = false;
+  this.position.x = endPos[0];
+  this.position.y = endPos[1];
+  this.pieces.useIntermediateBoard(startPos, endPos);
+  piece = this.checkUp(7, squares, true);
+  if(piece && piece.getTeam() === this.team && piece.attacksOrtho){
+    console.log("up", piece);
+    attacked = true;
+  }
+  piece = this.checkLeft(7, squares, true);
+  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksOrtho){
+    console.log("left", piece);
+    attacked = true;
+  }
+  piece = this.checkDown(7, squares, true);
+  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksOrtho){
+    console.log("down", piece);
+    attacked = true;
+  }
+  piece = this.checkRight(7, squares, true);
+  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksOrtho){
+    console.log("right", piece);
+    attacked = true;
+  }
+  piece = this.checkDiagUpLeft(7, squares, true);
+  console.log(piece);
+  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+    console.log("diag", piece);
+    attacked = true;
+  }
+  piece = this.checkDiagUpRight(7, squares, true);
+  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+    console.log("diag", piece);
+    attacked = true;
+  }
+  piece = this.checkDiagDownLeft(7, squares, true);
+  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+    console.log("diag", piece);
+    attacked = true;
+  }
+  piece = this.checkDiagDownRight(7, squares, true);
+  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+    console.log("diag", piece);
+    attacked = true;
+  }
+  this.position.x = startPos[0];
+  this.position.y = startPos[1];
+  this.pieces.useActualBoard();
+  return attacked;
 };
 
 module.exports = King;
@@ -1188,6 +1246,7 @@ var Piece = require("./piece.js");
 
 function Knight(team, x, y){
   Piece.apply(this, arguments);
+  this.attacksKnight = true;
 }
 $h.inherit(Piece, Knight);
 //Returns an array of all possible x,y pairs the Knight can move
@@ -1263,6 +1322,8 @@ module.exports = Knight;
       throw message;
     }
   };
+  window.STUB = function(){};
+  window.printBoard = function(){pieces.print()}
   $h.constants("squareSize", canvasSize/8);
   canvas.append("#game");
   board.setSquareSize($h.constants("squareSize"));
@@ -1271,9 +1332,12 @@ module.exports = Knight;
   board.setWhiteColor("#440663");
   board.setBlackColor("#CCCCCC");
 
-
-  pieces.init();
-  gameRunner.init(pieces);
+  $h.loadImages([{src:"assests/black_pieces/queen.png", "name": "black_queen"}],function(){}, function(){
+    pieces.init();
+    gameRunner.init(pieces);
+    $h.run();
+  });
+  
   registerClicks(canvas, board);
   $h.render(function(){
     board.draw(canvas);
@@ -1307,6 +1371,7 @@ var Piece = require("./piece.js");
 function Pawn(team, x, y){
   Piece.apply(this, arguments);
   this.moved = false;
+  this.attacksPawn = true;
 }
 $h.inherit(Piece, Pawn);
 //Returns an array of all possible x,y pairs the Pawn can move
@@ -1339,13 +1404,13 @@ Pawn.prototype.calcMoves = function(){
   //Now we check the diagnals
   tiley = this.position.y + dx;
   tilex = this.position.x;
-  pieceAt = this.pieces.at(tilex+1, tiley)
+  pieceAt = this.pieces.at(tilex+1, tiley);
   if(pieceAt && pieceAt.getTeam() !== this.team){
-    squares.push([tilex+1, tiley])
+    squares.push([tilex+1, tiley]);
   }
-  pieceAt = this.pieces.at(tilex-1, tiley)
+  pieceAt = this.pieces.at(tilex-1, tiley);
   if(pieceAt && pieceAt.getTeam() !== this.team){
-    squares.push([tilex-1, tiley])
+    squares.push([tilex-1, tiley]);
   }
   this.validSquares = squares;
 };
@@ -1363,6 +1428,7 @@ module.exports = Pawn;
 },{"../lib/headOn.js":1,"./piece.js":9}],9:[function(require,module,exports){
 (function(){
   "use strict";
+  var count = 0;
   var $h = require("../lib/headOn.js");
   var defaults = {
     "white": "white",
@@ -1377,6 +1443,11 @@ module.exports = Pawn;
     this.validSquares = [];
     this._alive = true;
     this.takenBy = null;
+    this.attacksOrtho = false;
+    this.attacksDiag = false;
+    this.attacksKnight = false;
+    this.attacksPawn = false;
+    count++;
   }
 
   Piece.prototype.getTeam = function(){
@@ -1395,11 +1466,11 @@ module.exports = Pawn;
   Piece.prototype.setInactive = function(){
     this._active = false;
   };
-  Piece.prototype.checkUp = function(range){
-    var squares = [];
+  Piece.prototype.checkUp = function(range, squares){
     var p = null;
     var tile = this.position.y + 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(tile < 8 && dist <= range){
       p = this.pieces.at(this.position.x, tile);
       if(!p){
@@ -1413,17 +1484,30 @@ module.exports = Pawn;
       tile++;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkDown = function(range){
-    var squares = [];
+  //In: range out: squares
+  //Returns the piece hit, if there is one
+  Piece.prototype.checkDown = function(range, squares, check){
     var p = null;
     var tile = this.position.y - 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
+    var underAttack;
+    console.log("here", check)
     while(tile >= 0 && dist <= range){
       p = this.pieces.at(this.position.x, tile);
       if(!p){
-        squares.push([this.position.x, tile]);
+        if(!check){
+          underAttack = king.underAttack([this.position.x, this.position.y], [this.position.x, tile]);
+        }
+        if(!underAttack){
+          squares.push([this.position.x, tile]);
+        }else{
+          break;
+        }
+        
+
       }else{
         if(p.team != this.team){
           squares.push([this.position.x, tile]);
@@ -1433,17 +1517,26 @@ module.exports = Pawn;
       tile--;
       dist++;
     }
-    return squares;
+    return p;
   };
-   Piece.prototype.checkRight = function(range){
-    var squares = [];
+  
+  Piece.prototype.checkRight = function(range, squares, check){
     var p = null;
     var tile = this.position.x + 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
+    var underAttack;
     while(tile < 8 && dist <= range){
       p = this.pieces.at(tile, this.position.y);
       if(!p){
-        squares.push([tile, this.position.y]);
+        if(check){
+          underAttack = king.underAttack([this.position.x, this.position.y], [tile, this.position.y]);
+        }
+        if(!underAttack){
+          squares.push([tile, this.position.y]);
+        }else{
+          break;
+        }
       }else{
         if(p.team != this.team){
           squares.push([tile, this.position.y]);
@@ -1453,10 +1546,9 @@ module.exports = Pawn;
       tile++;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkLeft = function(range){
-    var squares = [];
+  Piece.prototype.checkLeft = function(range, squares){
     var p = null;
     var tile = this.position.x - 1;
     var dist = 1;
@@ -1473,14 +1565,16 @@ module.exports = Pawn;
       tile--;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkDiagUpLeft = function(range){
-    var squares = [];
+  Piece.prototype.checkDiagUpLeft = function(range, squares, check){
     var p = null;
     var tilex = this.position.x - 1;
     var tiley = this.position.y + 1;
     var dist = 1;
+    if(check){
+      printBoard();
+    }
     while(tilex >= 0 && tiley < 8 && dist <= range){
       p = this.pieces.at(tilex, tiley);
       if(!p){
@@ -1495,11 +1589,10 @@ module.exports = Pawn;
       tiley++;
       dist++;
     }
-    return squares;
+    return p;
   };
 
-  Piece.prototype.checkDiagUpRight = function(range){
-    var squares = [];
+  Piece.prototype.checkDiagUpRight = function(range, squares){
     var p = null;
     var tilex = this.position.x + 1;
     var tiley = this.position.y + 1;
@@ -1518,10 +1611,9 @@ module.exports = Pawn;
       tiley++;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkDiagDownRight = function(range){
-    var squares = [];
+  Piece.prototype.checkDiagDownRight = function(range, squares){
     var p = null;
     var tilex = this.position.x + 1;
     var tiley = this.position.y - 1;
@@ -1540,10 +1632,9 @@ module.exports = Pawn;
       tiley--;
       dist++;
     }
-    return squares;
+    return p;
   };
-  Piece.prototype.checkDiagDownLeft = function(range){
-    var squares = [];
+  Piece.prototype.checkDiagDownLeft = function(range, squares){
     var p = null;
     var tilex = this.position.x - 1;
     var tiley = this.position.y - 1;
@@ -1562,7 +1653,7 @@ module.exports = Pawn;
       tiley--;
       dist++;
     }
-    return squares;
+    return p;
   };
   Piece.prototype.translate = function(val, flip){
     return (flip) ? val : (val - 7) * -1;
@@ -1599,6 +1690,7 @@ module.exports = Pawn;
     this._alive = false;
     this.takenBy = piece;
   };
+  
   Piece.prototype.draw = function(canvas, flip){
     //If we are a taken piece dont draw us
     //Will probably will set to have it draw to the side of the screen
@@ -1616,7 +1708,12 @@ module.exports = Pawn;
         canvas.drawSquare(s[0] * squareSize, that.translate(s[1], flip) * squareSize, squareSize, "rgba(46, 96, 197, 0.7)");
       });
     }else{
-      canvas.drawSquare(this.position.x * squareSize, y * squareSize, squareSize - 10, this.color);
+      if(this.image){
+        canvas.drawImage(this.image, this.position.x * squareSize, y * squareSize);
+      }else{
+        canvas.drawSquare(this.position.x * squareSize, y * squareSize, squareSize - 10, this.color);
+      }
+      
     }
   };
 
@@ -1649,6 +1746,9 @@ module.exports = Pawn;
     },
     piecesTaken: [],
     board: [],
+    boardBackup: [],
+
+    _kings:{},
     init: function(){
       //represent the board as a 2d array
       this.board = [];
@@ -1657,7 +1757,7 @@ module.exports = Pawn;
       //set up the board propper we can put stuff in it.
       for(var i = 0; i<8; i++){
         for(var j = 0; j<8; j++){
-          this.board[i] = [];
+          this.board[i] = [false, false, false, false, false, false, false, false];
         }
       }
       //2 Queens
@@ -1671,8 +1771,41 @@ module.exports = Pawn;
       //4 rooks
       this._initRooks();
       //16 pawns
-      this._initPawns();
+      //this._initPawns();
 
+    },
+    //Switches the pieces to run checks on an intermediate board instead of the real once
+    useIntermediateBoard: function(startPos, endPos){
+      var piece;
+      this.boardBackup = this.board.map(function(arr){
+        return arr.slice(0);
+      });
+      //Assert a piece is here
+      piece = this.at(startPos[0], startPos[1]);
+      assert(piece, "No piece to move for the intermediate board representation");
+      this.board[startPos[1]][startPos[0]] = false;
+      this.board[endPos[1]][endPos[0]] = piece;
+
+    },
+    print: function(){
+      console.table(this.board);
+    },
+    //Switches to use the actual board
+    useActualBoard: function(){
+      this.board = this.boardBackup.map(function(arr){
+        return arr.slice(0);
+      });
+    },
+    //Gets the king for a specific team
+    getKing: function(team){
+      switch(team){
+        case TEAMS.white:
+          return this._kings.white;
+        case TEAMS.black:
+          return this._kings.black;
+        default:
+          assert(false, "team does not exist");
+      }
     },
     //Moves a passed in piece to the square passed to it
     //Updates its board representation
@@ -1688,7 +1821,7 @@ module.exports = Pawn;
           this.piecesTaken.push(pieceAtMovementSpace);
         }
         this.board[y][x] = piece;
-        this.board[oldy][oldx] = null;
+        this.board[oldy][oldx] = false;
         return true;
       }else{
         return false;
@@ -1699,11 +1832,13 @@ module.exports = Pawn;
       //if it is outside the range [0,7] in either x or y
       //return null as in nothing is there.
       if(x > 7 || x < 0 || y > 7 || y < 0){
-        return null;
+        return false;
       }
-      return this.board[y][x] || null;
+      return this.board[y][x] || false;
     },
-
+    copyBoard: function(){
+      return this.board.slice(0);
+    },
     //Draw the pieces to the board
     //gets the current canvas to draw to and whether or not the board is flipped
     draw: function(canvas, flip){
@@ -1715,18 +1850,22 @@ module.exports = Pawn;
       return (pos - 7) * -1;
     },
     _initQueens: function(){
-      var q1 = new Queen(TEAMS.white, 3, 0, this);
-      var q2 = new Queen(TEAMS.black, 3, 7, this);
-      this._pieces.push(q1,q2);
-      this.board[0][3] = q1;
-      this.board[7][3] = q2;
+      console.log(TEAMS);
+      var whiteQueen = new Queen(TEAMS.white, 3, 0, this);
+      var blackQueen = new Queen(TEAMS.black, 3, 7, this);
+      this._pieces.push(whiteQueen, blackQueen);
+      this.board[0][3] = whiteQueen;
+      this.board[7][3] = blackQueen;
     },
     _initKings: function(){
-      var k1 = new King(TEAMS.white, 4, 0, this);
-      var k2 = new King(TEAMS.black, 4, 7, this);
-      this._pieces.push(k1, k2);
-      this.board[0][4] = k1;
-      this.board[7][4] = k2;
+      var whiteKing = new King(TEAMS.white, 4, 0, this);
+      var blackKing = new King(TEAMS.black, 4, 7, this);
+      //Store the kings so pieces can use them later to see if king is in check.
+      this._kings.white = whiteKing;
+      this._kings.black = blackKing;
+      this._pieces.push(whiteKing, blackKing);
+      this.board[0][4] = whiteKing;
+      this.board[7][4] = blackKing;
     },
     _initBishops: function(){
       var b;
@@ -1801,22 +1940,31 @@ var Piece = require("./piece.js");
 
 function Queen(team, x, y){
   Piece.apply(this, arguments);
+  this.attacksOrtho = true;
+  this.attacksDiag = true;
+  // if(this.team === TEAMS.black){
+  //   this.image = $h.images("black_queen");
+  // }else{
+  // }
 }
 $h.inherit(Piece, Queen);
 //Returns an array of all possible x,y pairs the queen can move
 Queen.prototype.calcMoves = function(){
   //Valid squares
   var squares = [];
+  var king = this.pieces.getKing(this.team);
   //Go up
 
-  squares = squares.concat(this.checkUp(7));
-  squares = squares.concat(this.checkLeft(7));
-  squares = squares.concat(this.checkDown(7));
-  squares = squares.concat(this.checkRight(7));
-  squares = squares.concat(this.checkDiagUpLeft(7));
-  squares = squares.concat(this.checkDiagUpRight(7));
-  squares = squares.concat(this.checkDiagDownLeft(7));
-  squares = squares.concat(this.checkDiagDownRight(7));
+  this.checkUp(7, squares);
+  this.checkLeft(7, squares);
+  this.checkDown(7, squares);
+  this.checkRight(7, squares);
+  this.checkDiagUpLeft(7, squares);
+  this.checkDiagUpRight(7, squares);
+  this.checkDiagDownLeft(7, squares);
+  this.checkDiagDownRight(7, squares);
+
+
   this.validSquares = squares;
 };
 
@@ -1829,6 +1977,7 @@ var Piece = require("./piece.js");
 
 function Rook(team, x, y){
   Piece.apply(this, arguments);
+  this.attacksOrtho = true;
 }
 $h.inherit(Piece, Rook);
 //Returns an array of all possible x,y pairs the Rook can move
@@ -1836,10 +1985,10 @@ Rook.prototype.calcMoves = function(){
    var squares = [];
   //Go up
 
-  squares = squares.concat(this.checkUp(7));
-  squares = squares.concat(this.checkLeft(7));
-  squares = squares.concat(this.checkDown(7));
-  squares = squares.concat(this.checkRight(7));
+  this.checkUp(7, squares);
+  this.checkLeft(7, squares);
+  this.checkDown(7, squares);
+  this.checkRight(7, squares);
   
   this.validSquares = squares;
 };
