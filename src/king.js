@@ -24,52 +24,51 @@ King.prototype.underAttack = function(startPos, endPos){
   var squares = [];
   var piece;
   var attacked = false;
-  this.position.x = endPos[0];
-  this.position.y = endPos[1];
+  //this.position.x = endPos[0];
+  //this.position.y = endPos[1];
   this.pieces.useIntermediateBoard(startPos, endPos);
   piece = this.checkUp(7, squares, true);
-  if(piece && piece.getTeam() === this.team && piece.attacksOrtho){
+  if(piece && piece.getTeam() !== this.team && piece.attacksOrtho){
     console.log("up", piece);
     attacked = true;
   }
   piece = this.checkLeft(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksOrtho){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksOrtho){
     console.log("left", piece);
     attacked = true;
   }
   piece = this.checkDown(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksOrtho){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksOrtho){
     console.log("down", piece);
     attacked = true;
   }
   piece = this.checkRight(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksOrtho){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksOrtho){
     console.log("right", piece);
     attacked = true;
   }
   piece = this.checkDiagUpLeft(7, squares, true);
-  console.log(piece);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksDiag){
     console.log("diag", piece);
     attacked = true;
   }
   piece = this.checkDiagUpRight(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksDiag){
     console.log("diag", piece);
     attacked = true;
   }
   piece = this.checkDiagDownLeft(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksDiag){
     console.log("diag", piece);
     attacked = true;
   }
   piece = this.checkDiagDownRight(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksDiag){
     console.log("diag", piece);
     attacked = true;
   }
-  this.position.x = startPos[0];
-  this.position.y = startPos[1];
+  //this.position.x = startPos[0];
+  //this.position.y = startPos[1];
   this.pieces.useActualBoard();
   return attacked;
 };

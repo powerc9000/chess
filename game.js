@@ -1189,52 +1189,51 @@ King.prototype.underAttack = function(startPos, endPos){
   var squares = [];
   var piece;
   var attacked = false;
-  this.position.x = endPos[0];
-  this.position.y = endPos[1];
+  //this.position.x = endPos[0];
+  //this.position.y = endPos[1];
   this.pieces.useIntermediateBoard(startPos, endPos);
   piece = this.checkUp(7, squares, true);
-  if(piece && piece.getTeam() === this.team && piece.attacksOrtho){
+  if(piece && piece.getTeam() !== this.team && piece.attacksOrtho){
     console.log("up", piece);
     attacked = true;
   }
   piece = this.checkLeft(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksOrtho){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksOrtho){
     console.log("left", piece);
     attacked = true;
   }
   piece = this.checkDown(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksOrtho){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksOrtho){
     console.log("down", piece);
     attacked = true;
   }
   piece = this.checkRight(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksOrtho){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksOrtho){
     console.log("right", piece);
     attacked = true;
   }
   piece = this.checkDiagUpLeft(7, squares, true);
-  console.log(piece);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksDiag){
     console.log("diag", piece);
     attacked = true;
   }
   piece = this.checkDiagUpRight(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksDiag){
     console.log("diag", piece);
     attacked = true;
   }
   piece = this.checkDiagDownLeft(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksDiag){
     console.log("diag", piece);
     attacked = true;
   }
   piece = this.checkDiagDownRight(7, squares, true);
-  if(!attacked && piece && piece.getTeam() === this.team && piece.attacksDiag){
+  if(!attacked && piece && piece.getTeam() !== this.team && piece.attacksDiag){
     console.log("diag", piece);
     attacked = true;
   }
-  this.position.x = startPos[0];
-  this.position.y = startPos[1];
+  //this.position.x = startPos[0];
+  //this.position.y = startPos[1];
   this.pieces.useActualBoard();
   return attacked;
 };
@@ -1447,7 +1446,6 @@ module.exports = Pawn;
     this.attacksDiag = false;
     this.attacksKnight = false;
     this.attacksPawn = false;
-    count++;
   }
 
   Piece.prototype.getTeam = function(){
@@ -1466,21 +1464,14 @@ module.exports = Pawn;
   Piece.prototype.setInactive = function(){
     this._active = false;
   };
-  Piece.prototype.checkUp = function(range, squares){
+  Piece.prototype.checkUp = function(range, squares, check){
     var p = null;
     var tile = this.position.y + 1;
     var dist = 1;
     var king = this.pieces.getKing(this.team);
     while(tile < 8 && dist <= range){
-      p = this.pieces.at(this.position.x, tile);
-      if(!p){
-        squares.push([this.position.x, tile]);
-      }else{
-        if(p.team != this.team){
-          squares.push([this.position.x, tile]);
-        }
-        break;
-      }
+      p = this.loopInner(this.position.x, tile, squares, king, check);
+      if(p) break;
       tile++;
       dist++;
     }
@@ -1494,26 +1485,9 @@ module.exports = Pawn;
     var dist = 1;
     var king = this.pieces.getKing(this.team);
     var underAttack;
-    console.log("here", check)
     while(tile >= 0 && dist <= range){
-      p = this.pieces.at(this.position.x, tile);
-      if(!p){
-        if(!check){
-          underAttack = king.underAttack([this.position.x, this.position.y], [this.position.x, tile]);
-        }
-        if(!underAttack){
-          squares.push([this.position.x, tile]);
-        }else{
-          break;
-        }
-        
-
-      }else{
-        if(p.team != this.team){
-          squares.push([this.position.x, tile]);
-        }
-        break;
-      }
+      p = this.loopInner(this.position.x, tile, squares, king, check);
+      if(p) break;
       tile--;
       dist++;
     }
@@ -1525,43 +1499,22 @@ module.exports = Pawn;
     var tile = this.position.x + 1;
     var dist = 1;
     var king = this.pieces.getKing(this.team);
-    var underAttack;
     while(tile < 8 && dist <= range){
-      p = this.pieces.at(tile, this.position.y);
-      if(!p){
-        if(check){
-          underAttack = king.underAttack([this.position.x, this.position.y], [tile, this.position.y]);
-        }
-        if(!underAttack){
-          squares.push([tile, this.position.y]);
-        }else{
-          break;
-        }
-      }else{
-        if(p.team != this.team){
-          squares.push([tile, this.position.y]);
-        }
-        break;
-      }
+      p = this.loopInner(tile, this.position.y, squares, king, check);
+      if(p) break;
       tile++;
       dist++;
     }
     return p;
   };
-  Piece.prototype.checkLeft = function(range, squares){
+  Piece.prototype.checkLeft = function(range, squares, check){
     var p = null;
     var tile = this.position.x - 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(tile >= 0 && dist <= range){
-      p = this.pieces.at(tile, this.position.y);
-      if(!p){
-        squares.push([tile, this.position.y]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tile, this.position.y]);
-        }
-        break;
-      }
+      p = this.loopInner(tile, this.position.y, squares, king, check);
+      if(p) break;
       tile--;
       dist++;
     }
@@ -1572,19 +1525,10 @@ module.exports = Pawn;
     var tilex = this.position.x - 1;
     var tiley = this.position.y + 1;
     var dist = 1;
-    if(check){
-      printBoard();
-    }
+    var king = this.pieces.getKing(this.team);
     while(tilex >= 0 && tiley < 8 && dist <= range){
-      p = this.pieces.at(tilex, tiley);
-      if(!p){
-        squares.push([tilex, tiley]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tilex, tiley]);
-        }
-        break;
-      }
+      p = this.loopInner(tilex, tiley, squares, king, check);
+      if(p) break;
       tilex--;
       tiley++;
       dist++;
@@ -1592,63 +1536,45 @@ module.exports = Pawn;
     return p;
   };
 
-  Piece.prototype.checkDiagUpRight = function(range, squares){
+  Piece.prototype.checkDiagUpRight = function(range, squares, check){
     var p = null;
     var tilex = this.position.x + 1;
     var tiley = this.position.y + 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(tilex < 8 && tiley < 8 && dist <= range){
-      p = this.pieces.at(tilex, tiley);
-      if(!p){
-        squares.push([tilex, tiley]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tilex, tiley]);
-        }
-        break;
-      }
+      p = this.loopInner(tilex, tiley, squares, king, check);
+      if(p) break;
       tilex++;
       tiley++;
       dist++;
     }
     return p;
   };
-  Piece.prototype.checkDiagDownRight = function(range, squares){
+  Piece.prototype.checkDiagDownRight = function(range, squares, check){
     var p = null;
     var tilex = this.position.x + 1;
     var tiley = this.position.y - 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(tilex < 8 && tiley >= 0 && dist <= range){
-      p = this.pieces.at(tilex, tiley);
-      if(!p){
-        squares.push([tilex, tiley]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tilex, tiley]);
-        }
-        break;
-      }
+      p = this.loopInner(tilex, tiley, squares, king, check);
+      if(p) break;
       tilex++;
       tiley--;
       dist++;
     }
     return p;
   };
-  Piece.prototype.checkDiagDownLeft = function(range, squares){
+  Piece.prototype.checkDiagDownLeft = function(range, squares, check){
     var p = null;
     var tilex = this.position.x - 1;
     var tiley = this.position.y - 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(this.inBounds(tilex, tiley) && dist <= range){
-      p = this.pieces.at(tilex, tiley);
-      if(!p){
-        squares.push([tilex, tiley]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tilex, tiley]);
-        }
-        break;
-      }
+      p = this.loopInner(tilex, tiley, squares, king, check);
+      if(p) break;
       tilex--;
       tiley--;
       dist++;
@@ -1685,6 +1611,29 @@ module.exports = Pawn;
     }else{
       return false;
     }
+  };
+  //The inner part of checking for shit is the same for all the check functions so I factored it out 
+  Piece.prototype.loopInner = function(x, y, squares, king, check){
+    var p = this.pieces.at(x, y);
+    var underAttack = false;
+    var squareToAdd;
+    if(!p || (p.getTeam() != this.team)){
+      //The check is a flag called when the king calls this function
+      //We dont want him to recursively call underAttack.
+      //Would be bad. Cause it did that. And it was.
+      
+      if(!check){
+        underAttack = king.underAttack([this.position.x, this.position.y], [x, y]);
+      }
+      if(!underAttack){
+        squareToAdd = [x, y];
+      }
+    }
+    
+    if(squareToAdd){
+      squares.push(squareToAdd);
+    }
+    return p;
   };
   Piece.prototype.taken = function(piece){
     this._alive = false;
@@ -1777,6 +1726,7 @@ module.exports = Pawn;
     //Switches the pieces to run checks on an intermediate board instead of the real once
     useIntermediateBoard: function(startPos, endPos){
       var piece;
+      
       this.boardBackup = this.board.map(function(arr){
         return arr.slice(0);
       });
@@ -1785,16 +1735,21 @@ module.exports = Pawn;
       assert(piece, "No piece to move for the intermediate board representation");
       this.board[startPos[1]][startPos[0]] = false;
       this.board[endPos[1]][endPos[0]] = piece;
-
+      this.intermediatePiecePos = piece.position.copy();
+      this.intermediatePiece = piece;
+      piece.x = endPos[0];
+      piece.y = endPos[1];
     },
-    print: function(){
-      console.table(this.board);
-    },
+    
     //Switches to use the actual board
     useActualBoard: function(){
       this.board = this.boardBackup.map(function(arr){
         return arr.slice(0);
       });
+      this.intermediatePiece.position = this.intermediatePiecePos.copy();
+    },
+    print: function(){
+      console.table(this.board);
     },
     //Gets the king for a specific team
     getKing: function(team){

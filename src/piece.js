@@ -19,7 +19,6 @@
     this.attacksDiag = false;
     this.attacksKnight = false;
     this.attacksPawn = false;
-    count++;
   }
 
   Piece.prototype.getTeam = function(){
@@ -38,21 +37,14 @@
   Piece.prototype.setInactive = function(){
     this._active = false;
   };
-  Piece.prototype.checkUp = function(range, squares){
+  Piece.prototype.checkUp = function(range, squares, check){
     var p = null;
     var tile = this.position.y + 1;
     var dist = 1;
     var king = this.pieces.getKing(this.team);
     while(tile < 8 && dist <= range){
-      p = this.pieces.at(this.position.x, tile);
-      if(!p){
-        squares.push([this.position.x, tile]);
-      }else{
-        if(p.team != this.team){
-          squares.push([this.position.x, tile]);
-        }
-        break;
-      }
+      p = this.loopInner(this.position.x, tile, squares, king, check);
+      if(p) break;
       tile++;
       dist++;
     }
@@ -66,26 +58,9 @@
     var dist = 1;
     var king = this.pieces.getKing(this.team);
     var underAttack;
-    console.log("here", check)
     while(tile >= 0 && dist <= range){
-      p = this.pieces.at(this.position.x, tile);
-      if(!p){
-        if(!check){
-          underAttack = king.underAttack([this.position.x, this.position.y], [this.position.x, tile]);
-        }
-        if(!underAttack){
-          squares.push([this.position.x, tile]);
-        }else{
-          break;
-        }
-        
-
-      }else{
-        if(p.team != this.team){
-          squares.push([this.position.x, tile]);
-        }
-        break;
-      }
+      p = this.loopInner(this.position.x, tile, squares, king, check);
+      if(p) break;
       tile--;
       dist++;
     }
@@ -97,43 +72,22 @@
     var tile = this.position.x + 1;
     var dist = 1;
     var king = this.pieces.getKing(this.team);
-    var underAttack;
     while(tile < 8 && dist <= range){
-      p = this.pieces.at(tile, this.position.y);
-      if(!p){
-        if(check){
-          underAttack = king.underAttack([this.position.x, this.position.y], [tile, this.position.y]);
-        }
-        if(!underAttack){
-          squares.push([tile, this.position.y]);
-        }else{
-          break;
-        }
-      }else{
-        if(p.team != this.team){
-          squares.push([tile, this.position.y]);
-        }
-        break;
-      }
+      p = this.loopInner(tile, this.position.y, squares, king, check);
+      if(p) break;
       tile++;
       dist++;
     }
     return p;
   };
-  Piece.prototype.checkLeft = function(range, squares){
+  Piece.prototype.checkLeft = function(range, squares, check){
     var p = null;
     var tile = this.position.x - 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(tile >= 0 && dist <= range){
-      p = this.pieces.at(tile, this.position.y);
-      if(!p){
-        squares.push([tile, this.position.y]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tile, this.position.y]);
-        }
-        break;
-      }
+      p = this.loopInner(tile, this.position.y, squares, king, check);
+      if(p) break;
       tile--;
       dist++;
     }
@@ -144,19 +98,10 @@
     var tilex = this.position.x - 1;
     var tiley = this.position.y + 1;
     var dist = 1;
-    if(check){
-      printBoard();
-    }
+    var king = this.pieces.getKing(this.team);
     while(tilex >= 0 && tiley < 8 && dist <= range){
-      p = this.pieces.at(tilex, tiley);
-      if(!p){
-        squares.push([tilex, tiley]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tilex, tiley]);
-        }
-        break;
-      }
+      p = this.loopInner(tilex, tiley, squares, king, check);
+      if(p) break;
       tilex--;
       tiley++;
       dist++;
@@ -164,63 +109,45 @@
     return p;
   };
 
-  Piece.prototype.checkDiagUpRight = function(range, squares){
+  Piece.prototype.checkDiagUpRight = function(range, squares, check){
     var p = null;
     var tilex = this.position.x + 1;
     var tiley = this.position.y + 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(tilex < 8 && tiley < 8 && dist <= range){
-      p = this.pieces.at(tilex, tiley);
-      if(!p){
-        squares.push([tilex, tiley]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tilex, tiley]);
-        }
-        break;
-      }
+      p = this.loopInner(tilex, tiley, squares, king, check);
+      if(p) break;
       tilex++;
       tiley++;
       dist++;
     }
     return p;
   };
-  Piece.prototype.checkDiagDownRight = function(range, squares){
+  Piece.prototype.checkDiagDownRight = function(range, squares, check){
     var p = null;
     var tilex = this.position.x + 1;
     var tiley = this.position.y - 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(tilex < 8 && tiley >= 0 && dist <= range){
-      p = this.pieces.at(tilex, tiley);
-      if(!p){
-        squares.push([tilex, tiley]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tilex, tiley]);
-        }
-        break;
-      }
+      p = this.loopInner(tilex, tiley, squares, king, check);
+      if(p) break;
       tilex++;
       tiley--;
       dist++;
     }
     return p;
   };
-  Piece.prototype.checkDiagDownLeft = function(range, squares){
+  Piece.prototype.checkDiagDownLeft = function(range, squares, check){
     var p = null;
     var tilex = this.position.x - 1;
     var tiley = this.position.y - 1;
     var dist = 1;
+    var king = this.pieces.getKing(this.team);
     while(this.inBounds(tilex, tiley) && dist <= range){
-      p = this.pieces.at(tilex, tiley);
-      if(!p){
-        squares.push([tilex, tiley]);
-      }else{
-        if(p.team != this.team){
-          squares.push([tilex, tiley]);
-        }
-        break;
-      }
+      p = this.loopInner(tilex, tiley, squares, king, check);
+      if(p) break;
       tilex--;
       tiley--;
       dist++;
@@ -257,6 +184,29 @@
     }else{
       return false;
     }
+  };
+  //The inner part of checking for shit is the same for all the check functions so I factored it out 
+  Piece.prototype.loopInner = function(x, y, squares, king, check){
+    var p = this.pieces.at(x, y);
+    var underAttack = false;
+    var squareToAdd;
+    if(!p || (p.getTeam() != this.team)){
+      //The check is a flag called when the king calls this function
+      //We dont want him to recursively call underAttack.
+      //Would be bad. Cause it did that. And it was.
+      
+      if(!check){
+        underAttack = king.underAttack([this.position.x, this.position.y], [x, y]);
+      }
+      if(!underAttack){
+        squareToAdd = [x, y];
+      }
+    }
+    
+    if(squareToAdd){
+      squares.push(squareToAdd);
+    }
+    return p;
   };
   Piece.prototype.taken = function(piece){
     this._alive = false;

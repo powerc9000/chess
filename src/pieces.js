@@ -53,6 +53,7 @@
     //Switches the pieces to run checks on an intermediate board instead of the real once
     useIntermediateBoard: function(startPos, endPos){
       var piece;
+      
       this.boardBackup = this.board.map(function(arr){
         return arr.slice(0);
       });
@@ -61,16 +62,21 @@
       assert(piece, "No piece to move for the intermediate board representation");
       this.board[startPos[1]][startPos[0]] = false;
       this.board[endPos[1]][endPos[0]] = piece;
-
+      this.intermediatePiecePos = piece.position.copy();
+      this.intermediatePiece = piece;
+      piece.x = endPos[0];
+      piece.y = endPos[1];
     },
-    print: function(){
-      console.table(this.board);
-    },
+    
     //Switches to use the actual board
     useActualBoard: function(){
       this.board = this.boardBackup.map(function(arr){
         return arr.slice(0);
       });
+      this.intermediatePiece.position = this.intermediatePiecePos.copy();
+    },
+    print: function(){
+      console.table(this.board);
     },
     //Gets the king for a specific team
     getKing: function(team){
