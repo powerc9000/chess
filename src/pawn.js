@@ -6,6 +6,7 @@ function Pawn(team, x, y){
   this.moved = false;
   this.attacksPawn = true;
 }
+
 $h.inherit(Piece, Pawn);
 //Returns an array of all possible x,y pairs the Pawn can move
 Pawn.prototype.calcMoves = function(){

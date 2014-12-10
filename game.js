@@ -1300,7 +1300,7 @@ module.exports = Knight;
 (function(){
   "use strict";
   var $h = require("../lib/headOn.js");
-  var canvasSize = 800;
+  var canvasSize = 600;
   var gameRunner = require("./game_runner.js");
   var board = require("./board.js");
   var pieces = require("./pieces.js");
@@ -1308,6 +1308,13 @@ module.exports = Knight;
   var canvas = $h.canvas.create("main", canvasSize, canvasSize, camera);
   var gameHTMLNode = document.getElementById("game");
   var TEAMS = {white:{}, black:{}};
+  var pawnInput = document.getElementById("pawnCheck")
+  var showPawns = pawnInput.checked;
+  pawnInput.addEventListener("change", function(e){
+    showPawns = e.target.checked;
+    gameReset();
+    
+  })
   //Make an enum of the teams kind of hacky but it will work
   Object.freeze(TEAMS);
   window.TEAMS = TEAMS;
@@ -1323,6 +1330,7 @@ module.exports = Knight;
   };
   window.STUB = function(){};
   window.printBoard = function(){pieces.print()}
+
   $h.constants("squareSize", canvasSize/8);
   canvas.append("#game");
   board.setSquareSize($h.constants("squareSize"));
@@ -1332,8 +1340,7 @@ module.exports = Knight;
   board.setBlackColor("#CCCCCC");
 
   $h.loadImages([{src:"assests/black_pieces/queen.png", "name": "black_queen"}],function(){}, function(){
-    pieces.init();
-    gameRunner.init(pieces);
+    gameReset();
     $h.run();
   });
   
@@ -1360,6 +1367,10 @@ module.exports = Knight;
       $h.events.trigger("squareclick", x, y);
     });
   }
+  function gameReset(){
+    pieces.init(showPawns);
+    gameRunner.init(pieces);
+  }
 }());
 
 
@@ -1372,6 +1383,7 @@ function Pawn(team, x, y){
   this.moved = false;
   this.attacksPawn = true;
 }
+
 $h.inherit(Piece, Pawn);
 //Returns an array of all possible x,y pairs the Pawn can move
 Pawn.prototype.calcMoves = function(){
@@ -1698,7 +1710,8 @@ module.exports = Pawn;
     boardBackup: [],
 
     _kings:{},
-    init: function(){
+    init: function(showPawns){
+      this._pieces = [];
       //represent the board as a 2d array
       this.board = [];
       //Pieces that have been taken and are no longer in play
@@ -1720,7 +1733,10 @@ module.exports = Pawn;
       //4 rooks
       this._initRooks();
       //16 pawns
-      //this._initPawns();
+      if(showPawns){
+        this._initPawns();
+      }
+      
 
     },
     //Switches the pieces to run checks on an intermediate board instead of the real once

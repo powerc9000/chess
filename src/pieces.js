@@ -25,7 +25,8 @@
     boardBackup: [],
 
     _kings:{},
-    init: function(){
+    init: function(showPawns){
+      this._pieces = [];
       //represent the board as a 2d array
       this.board = [];
       //Pieces that have been taken and are no longer in play
@@ -47,7 +48,10 @@
       //4 rooks
       this._initRooks();
       //16 pawns
-      //this._initPawns();
+      if(showPawns){
+        this._initPawns();
+      }
+      
 
     },
     //Switches the pieces to run checks on an intermediate board instead of the real once

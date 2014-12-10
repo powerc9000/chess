@@ -1,7 +1,7 @@
 (function(){
   "use strict";
   var $h = require("../lib/headOn.js");
-  var canvasSize = 800;
+  var canvasSize = 600;
   var gameRunner = require("./game_runner.js");
   var board = require("./board.js");
   var pieces = require("./pieces.js");
@@ -9,6 +9,13 @@
   var canvas = $h.canvas.create("main", canvasSize, canvasSize, camera);
   var gameHTMLNode = document.getElementById("game");
   var TEAMS = {white:{}, black:{}};
+  var pawnInput = document.getElementById("pawnCheck")
+  var showPawns = pawnInput.checked;
+  pawnInput.addEventListener("change", function(e){
+    showPawns = e.target.checked;
+    gameReset();
+    
+  })
   //Make an enum of the teams kind of hacky but it will work
   Object.freeze(TEAMS);
   window.TEAMS = TEAMS;
@@ -24,6 +31,7 @@
   };
   window.STUB = function(){};
   window.printBoard = function(){pieces.print()}
+
   $h.constants("squareSize", canvasSize/8);
   canvas.append("#game");
   board.setSquareSize($h.constants("squareSize"));
@@ -33,8 +41,7 @@
   board.setBlackColor("#CCCCCC");
 
   $h.loadImages([{src:"assests/black_pieces/queen.png", "name": "black_queen"}],function(){}, function(){
-    pieces.init();
-    gameRunner.init(pieces);
+    gameReset();
     $h.run();
   });
   
@@ -60,6 +67,10 @@
 
       $h.events.trigger("squareclick", x, y);
     });
+  }
+  function gameReset(){
+    pieces.init(showPawns);
+    gameRunner.init(pieces);
   }
 }());
 
